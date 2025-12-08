@@ -26,9 +26,22 @@ export function PreviewSection({
     const laptopRef = useRef(null);
     const desktopRef = useRef(null);
 
-    const getPixelRatio = () => {
-        if (typeof window === 'undefined') return 1;
-        return Math.min(window.devicePixelRatio || 1, 2);
+    const getPixelRatio = (element, {
+        targetWidth = 7680,
+        targetHeight = 4320
+    } = {}) => {
+        if (typeof window === 'undefined') return 4;
+        const rect = element?.getBoundingClientRect();
+        const baseRatio = window.devicePixelRatio || 1;
+        if (!rect) {
+            return Math.max(4, Math.min(8, baseRatio * 3));
+        }
+
+        const widthRatio = targetWidth / rect.width;
+        const heightRatio = targetHeight / rect.height;
+
+        const desiredRatio = Math.max(widthRatio, heightRatio, 4);
+        return Math.min(8, Math.max(desiredRatio, baseRatio * 2));
     };
 
     const waitForFonts = async () => {
@@ -43,15 +56,45 @@ export function PreviewSection({
         }
     };
 
+    const hideElementsForExport = (element) => {
+        if (!element || typeof element.querySelectorAll !== 'function') return [];
+        const hiddenNodes = Array.from(element.querySelectorAll('[data-hide-on-export="true"]'));
+        hiddenNodes.forEach(node => {
+            node.dataset.prevVisibility = node.style.visibility || '';
+            node.style.visibility = 'hidden';
+        });
+        return hiddenNodes;
+    };
+
+    const restoreHiddenElements = (nodes = []) => {
+        nodes.forEach(node => {
+            if (!node) return;
+            node.style.visibility = node.dataset.prevVisibility || '';
+            delete node.dataset.prevVisibility;
+        });
+    };
+
     const exportElement = async (element, options = {}) => {
         if (!element) return null;
         await waitForFonts();
-        return toPng(element, {
-            cacheBust: true,
-            pixelRatio: getPixelRatio(),
-            backgroundColor: '#00000000',
-            ...options
-        });
+        const rect = element.getBoundingClientRect();
+        const pixelRatio = getPixelRatio(element, options);
+        const canvasWidth = rect?.width ? rect.width * pixelRatio : undefined;
+        const canvasHeight = rect?.height ? rect.height * pixelRatio : undefined;
+
+        const hiddenNodes = hideElementsForExport(element);
+        try {
+            return await toPng(element, {
+                cacheBust: true,
+                pixelRatio,
+                canvasWidth,
+                canvasHeight,
+                backgroundColor: '#00000000',
+                ...options
+            });
+        } finally {
+            restoreHiddenElements(hiddenNodes);
+        }
     };
 
     const handleDownload = async (device) => {
@@ -403,6 +446,7 @@ export function PreviewSection({
                         <div ref={desktopRef} className="relative group w-full max-w-[600px] transition-transform duration-500 hover:scale-105 drop-shadow-2xl">
                             <DeviceFrame type="desktop" image={getDeviceImage('desktop')} loading={loading} />
                             <button
+                                data-hide-on-export="true"
                                 onClick={() => handleDownload('desktop')}
                                 className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-white hover:scale-110"
                                 title="Download Desktop"
@@ -417,6 +461,7 @@ export function PreviewSection({
                         <div ref={mobileRef} className="relative group w-[200px] transition-transform duration-500 hover:scale-105 drop-shadow-xl">
                             <DeviceFrame type="mobile" image={getDeviceImage('mobile')} loading={loading} />
                             <button
+                                data-hide-on-export="true"
                                 onClick={() => handleDownload('mobile')}
                                 className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-white hover:scale-110"
                                 title="Download Mobile"
@@ -431,6 +476,7 @@ export function PreviewSection({
                         <div ref={laptopRef} className="relative group w-[480px] transition-transform duration-500 hover:scale-105 drop-shadow-2xl self-end">
                             <DeviceFrame type="laptop" image={getDeviceImage('laptop')} loading={loading} />
                             <button
+                                data-hide-on-export="true"
                                 onClick={() => handleDownload('laptop')}
                                 className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-white hover:scale-110"
                                 title="Download Laptop"
@@ -445,6 +491,7 @@ export function PreviewSection({
                         <div ref={tabletRef} className="relative group w-[320px] transition-transform duration-500 hover:scale-105 drop-shadow-xl self-end">
                             <DeviceFrame type="tablet" image={getDeviceImage('tablet')} loading={loading} />
                             <button
+                                data-hide-on-export="true"
                                 onClick={() => handleDownload('tablet')}
                                 className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg hover:bg-white hover:scale-110"
                                 title="Download Tablet"
