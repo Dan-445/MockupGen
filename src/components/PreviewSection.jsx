@@ -27,8 +27,8 @@ export function PreviewSection({
     const desktopRef = useRef(null);
 
     const getPixelRatio = (element, {
-        targetWidth = 7680,
-        targetHeight = 4320
+        targetWidth = 4096,
+        targetHeight = 2304
     } = {}) => {
         if (typeof window === 'undefined') return 4;
         const rect = element?.getBoundingClientRect();
@@ -40,7 +40,7 @@ export function PreviewSection({
         const widthRatio = targetWidth / rect.width;
         const heightRatio = targetHeight / rect.height;
 
-        const desiredRatio = Math.max(widthRatio, heightRatio, 4);
+        const desiredRatio = Math.max(widthRatio, heightRatio, 3);
         return Math.min(8, Math.max(desiredRatio, baseRatio * 2));
     };
 
@@ -72,6 +72,72 @@ export function PreviewSection({
             node.style.visibility = node.dataset.prevVisibility || '';
             delete node.dataset.prevVisibility;
         });
+    };
+
+    const dataUrlToBlob = async (dataUrl) => {
+        const response = await fetch(dataUrl);
+        return response.blob();
+    };
+
+    const blobToDataUrl = (blob) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        });
+    };
+
+    const ensureMaxSize = async (dataUrl, {
+        maxBytes = 10 * 1024 * 1024,
+        mime = 'image/jpeg'
+    } = {}) => {
+        try {
+            let blob = await dataUrlToBlob(dataUrl);
+            if (blob.size <= maxBytes) {
+                return dataUrl;
+            }
+
+            const bitmap = await createImageBitmap(blob);
+            const canvas = document.createElement('canvas');
+            let width = bitmap.width;
+            let height = bitmap.height;
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(bitmap, 0, 0, width, height);
+
+            let quality = 0.92;
+            let step = 0.08;
+            while (quality > 0.4) {
+                const compressedBlob = await new Promise((resolve) => canvas.toBlob(resolve, mime, quality));
+                if (!compressedBlob) break;
+                if (compressedBlob.size <= maxBytes) {
+                    return await blobToDataUrl(compressedBlob);
+                }
+                blob = compressedBlob;
+                quality -= step;
+            }
+
+            // If still too large, scale down progressively
+            let scale = 0.9;
+            while (blob.size > maxBytes && scale > 0.5) {
+                width = Math.floor(width * scale);
+                height = Math.floor(height * scale);
+                canvas.width = width;
+                canvas.height = height;
+                ctx.clearRect(0, 0, width, height);
+                ctx.drawImage(bitmap, 0, 0, width, height);
+                const scaledBlob = await new Promise((resolve) => canvas.toBlob(resolve, mime, Math.max(quality, 0.5)));
+                if (!scaledBlob) break;
+                blob = scaledBlob;
+                scale -= 0.05;
+            }
+
+            return await blobToDataUrl(blob);
+        } catch (error) {
+            console.warn('Failed to compress image for export', error);
+            return dataUrl;
+        }
     };
 
     const exportElement = async (element, options = {}) => {
@@ -113,9 +179,10 @@ export function PreviewSection({
             setDownloading(true);
             const dataUrl = await exportElement(ref.current);
             if (!dataUrl) return;
+            const finalUrl = await ensureMaxSize(dataUrl);
             const link = document.createElement('a');
-            link.download = `mockup-${device}.png`;
-            link.href = dataUrl;
+            link.download = `mockup-${device}.jpg`;
+            link.href = finalUrl;
             link.click();
         } catch (err) {
             console.error('Failed to download image', err);
@@ -129,11 +196,12 @@ export function PreviewSection({
         try {
             setDownloading(true);
             const dataUrl = await exportElement(containerRef.current, { backgroundColor: '#ffffff00' }); // Transparent bg
+            const finalUrl = await ensureMaxSize(dataUrl);
             const link = document.createElement('a');
-            link.download = `mockup-composition.png`;
-            link.href = dataUrl;
+            link.download = `mockup-composition.jpg`;
+            link.href = finalUrl;
             link.click();
-            return dataUrl; // Return for zip
+            return finalUrl; // Return for zip
         } catch (err) {
             console.error('Failed to download composition', err);
             return null;
@@ -160,8 +228,12 @@ export function PreviewSection({
                 const promises = devices.map(async ({ name, ref }) => {
                     if (ref.current && images[name]) {
                         const dataUrl = await exportElement(ref.current);
-                        const base64Data = dataUrl.replace(/^data:image\/(png|jpg);base64,/, "");
-                        zip.file(`mockup-${name}.png`, base64Data, { base64: true });
+                        const finalUrl = await ensureMaxSize(dataUrl);
+                        const [meta = '', base64Data = ''] = finalUrl.split(',');
+                        const extension = meta.includes('jpeg') ? 'jpg' : 'png';
+                        if (base64Data) {
+                            zip.file(`mockup-${name}.${extension}`, base64Data, { base64: true });
+                        }
                     }
                 });
                 await Promise.all(promises);
@@ -171,8 +243,12 @@ export function PreviewSection({
             if (containerRef.current) {
                 const compositionDataUrl = await exportElement(containerRef.current, { backgroundColor: '#ffffff00' });
                 if (compositionDataUrl) {
-                    const compositionBase64 = compositionDataUrl.replace(/^data:image\/(png|jpg);base64,/, "");
-                    zip.file(`mockup-composition.png`, compositionBase64, { base64: true });
+                    const finalUrl = await ensureMaxSize(compositionDataUrl);
+                    const [meta = '', compositionBase64 = ''] = finalUrl.split(',');
+                    const extension = meta.includes('jpeg') ? 'jpg' : 'png';
+                    if (compositionBase64) {
+                        zip.file(`mockup-composition.${extension}`, compositionBase64, { base64: true });
+                    }
                 }
             }
 
