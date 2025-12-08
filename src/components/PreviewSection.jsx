@@ -346,16 +346,16 @@ export function PreviewSection({
                         ref={containerRef}
                         className="relative min-w-[1200px] mx-auto flex items-end justify-center gap-0 p-16 rounded-[40px] border border-white/60 bg-gradient-to-b from-white to-gray-50/50 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)]"
                     >
-                        <div className="relative z-30 w-[180px] -translate-y-3 mr-[-90px]">
+                        <div ref={mobileRef} className="relative z-30 w-[180px] -translate-y-3 mr-[-90px]">
                             <DeviceFrame type="mobile" image={getDeviceImage('mobile')} loading={loading} />
                         </div>
-                        <div className="relative z-20 w-[260px] -translate-y-3 mr-[-80px]">
+                        <div ref={tabletRef} className="relative z-20 w-[260px] -translate-y-3 mr-[-80px]">
                             <DeviceFrame type="tablet" image={getDeviceImage('tablet')} loading={loading} />
                         </div>
-                        <div className="relative z-10 w-[650px] translate-y-2 mx-[-45px]">
+                        <div ref={desktopRef} className="relative z-10 w-[650px] translate-y-2 mx-[-45px]">
                             <DeviceFrame type="desktop" image={getDeviceImage('desktop')} loading={loading} />
                         </div>
-                        <div className="relative z-20 w-[420px] -translate-y-1 ml-[-50px]">
+                        <div ref={laptopRef} className="relative z-20 w-[420px] -translate-y-1 ml-[-50px]">
                             <DeviceFrame type="laptop" image={getDeviceImage('laptop')} loading={loading} />
                         </div>
                     </div>
@@ -370,22 +370,22 @@ export function PreviewSection({
                         className="min-w-fit mx-auto flex items-center justify-center gap-0 p-6 rounded-[32px] border border-white/70 bg-[radial-gradient(circle_at_center,_#ffffff,_#eef2f8,_#dfe4ee)] shadow-[0_35px_90px_-50px_rgba(8,10,24,0.55)]"
                     >
                         {/* Desktop */}
-                        <div className="w-[700px] drop-shadow-2xl z-10 self-center">
+                        <div ref={desktopRef} className="w-[700px] drop-shadow-2xl z-10 self-center">
                             <DeviceFrame type="desktop" image={getDeviceImage('desktop')} loading={loading} />
                         </div>
 
                         {/* Laptop */}
-                        <div className="w-[500px] drop-shadow-2xl z-20 self-center">
+                        <div ref={laptopRef} className="w-[500px] drop-shadow-2xl z-20 self-center">
                             <DeviceFrame type="laptop" image={getDeviceImage('laptop')} loading={loading} />
                         </div>
 
                         {/* Tablet */}
-                        <div className="w-[340px] drop-shadow-2xl z-30 self-center">
+                        <div ref={tabletRef} className="w-[340px] drop-shadow-2xl z-30 self-center">
                             <DeviceFrame type="tablet" image={getDeviceImage('tablet')} loading={loading} />
                         </div>
 
                         {/* Mobile */}
-                        <div className="w-[180px] drop-shadow-2xl z-40 self-center">
+                        <div ref={mobileRef} className="w-[180px] drop-shadow-2xl z-40 self-center">
                             <DeviceFrame type="mobile" image={getDeviceImage('mobile')} loading={loading} />
                         </div>
                     </div>
@@ -400,7 +400,7 @@ export function PreviewSection({
                 >
                     {/* Monitor - top left */}
                     <div className="flex justify-end items-center pr-4">
-                        <div className="relative group w-full max-w-[600px] transition-transform duration-500 hover:scale-105 drop-shadow-2xl">
+                        <div ref={desktopRef} className="relative group w-full max-w-[600px] transition-transform duration-500 hover:scale-105 drop-shadow-2xl">
                             <DeviceFrame type="desktop" image={getDeviceImage('desktop')} loading={loading} />
                             <button
                                 onClick={() => handleDownload('desktop')}
@@ -414,7 +414,7 @@ export function PreviewSection({
 
                     {/* Mobile - top right */}
                     <div className="flex justify-start items-center pl-4">
-                        <div className="relative group w-[200px] transition-transform duration-500 hover:scale-105 drop-shadow-xl">
+                        <div ref={mobileRef} className="relative group w-[200px] transition-transform duration-500 hover:scale-105 drop-shadow-xl">
                             <DeviceFrame type="mobile" image={getDeviceImage('mobile')} loading={loading} />
                             <button
                                 onClick={() => handleDownload('mobile')}
@@ -428,7 +428,7 @@ export function PreviewSection({
 
                     {/* Laptop - bottom left */}
                     <div className="flex justify-end items-center pr-4">
-                        <div className="relative group w-[480px] transition-transform duration-500 hover:scale-105 drop-shadow-2xl self-end">
+                        <div ref={laptopRef} className="relative group w-[480px] transition-transform duration-500 hover:scale-105 drop-shadow-2xl self-end">
                             <DeviceFrame type="laptop" image={getDeviceImage('laptop')} loading={loading} />
                             <button
                                 onClick={() => handleDownload('laptop')}
@@ -442,7 +442,7 @@ export function PreviewSection({
 
                     {/* Tablet - bottom right */}
                     <div className="flex justify-start items-center pl-4">
-                        <div className="relative group w-[320px] transition-transform duration-500 hover:scale-105 drop-shadow-xl self-end">
+                        <div ref={tabletRef} className="relative group w-[320px] transition-transform duration-500 hover:scale-105 drop-shadow-xl self-end">
                             <DeviceFrame type="tablet" image={getDeviceImage('tablet')} loading={loading} />
                             <button
                                 onClick={() => handleDownload('tablet')}
@@ -477,6 +477,7 @@ export function PreviewSection({
                                 return (
                                     <div
                                         key={position}
+                                        ref={position === 'center' ? mobileRef : undefined}
                                         className={`${width} transform ${position === 'center' ? '' : 'opacity-90'} drop-shadow-[0_25px_45px_rgba(15,23,42,0.3)]`}
                                         style={{ transform: `${translate[position]} rotate(${rotations[position]})` }}
                                     >
@@ -509,6 +510,7 @@ export function PreviewSection({
                         {(phoneScreens.length ? phoneScreens : Array.from({ length: 4 }, (_, index) => getPhoneScreen(index))).map((screen, index) => (
                             <div
                                 key={screen.label + index}
+                                ref={index === 0 ? mobileRef : undefined}
                                 className="relative h-[520px] rounded-[32px] bg-gradient-to-b from-gray-50 to-white border border-gray-100 shadow-[0_25px_45px_rgba(15,23,42,0.15)] overflow-hidden group"
                             >
                                 <img

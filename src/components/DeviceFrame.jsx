@@ -4,7 +4,10 @@ import realDesktop from '../assets/desktop.png';
 import realMobile from '../assets/mobile.png';
 import realTablet from '../assets/tablet.png';
 
-export function DeviceFrame({ type, image, loading, contentFit = 'cover' }) {
+export const DeviceFrame = React.forwardRef(function DeviceFrame(
+    { type, image, loading, contentFit = 'cover' },
+    ref
+) {
     const [imageFailed, setImageFailed] = React.useState(false);
 
     React.useEffect(() => {
@@ -39,7 +42,7 @@ export function DeviceFrame({ type, image, loading, contentFit = 'cover' }) {
 
     if (type === 'mobile') {
         return (
-            <div className="relative mx-auto w-full max-w-[360px]">
+            <div ref={ref} className="relative mx-auto w-full max-w-[360px]">
                 <img
                     src={realMobile}
                     alt="Mobile frame"
@@ -62,7 +65,7 @@ export function DeviceFrame({ type, image, loading, contentFit = 'cover' }) {
 
     if (type === 'tablet') {
         return (
-            <div className="relative mx-auto w-full max-w-[520px]">
+            <div ref={ref} className="relative mx-auto w-full max-w-[520px]">
                 <img
                     src={realTablet}
                     alt="Tablet frame"
@@ -85,7 +88,7 @@ export function DeviceFrame({ type, image, loading, contentFit = 'cover' }) {
 
     if (type === 'laptop') {
         return (
-            <div className="relative mx-auto w-full max-w-[880px]">
+            <div ref={ref} className="relative mx-auto w-full max-w-[880px]">
                 <img
                     src={realLaptop}
                     alt="Laptop frame"
@@ -108,7 +111,7 @@ export function DeviceFrame({ type, image, loading, contentFit = 'cover' }) {
 
     if (type === 'desktop') {
         return (
-            <div className="relative mx-auto w-full max-w-[1040px] pb-[6%]">
+            <div ref={ref} className="relative mx-auto w-full max-w-[1040px] pb-[6%]">
                 <img
                     src={realDesktop}
                     alt="Desktop frame"
@@ -130,4 +133,6 @@ export function DeviceFrame({ type, image, loading, contentFit = 'cover' }) {
     }
 
     return null;
-}
+});
+
+DeviceFrame.displayName = 'DeviceFrame';
