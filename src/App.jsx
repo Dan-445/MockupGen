@@ -61,26 +61,29 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   // Helper to get screenshot URL
-  const getScreenshotUrl = (targetUrl, width, height, isMobile = false, usePrerender = false) => {
+  const getScreenshotUrl = (targetUrl, width, height, isMobile = false, usePrerender = false, isFullPage = false) => {
     if (!targetUrl) return null;
+
+    // Use our new local/serverless API
+    const baseUrl = '/api/screenshot';
+
     const params = new URLSearchParams({
       url: targetUrl,
-      screenshot: 'true',
-      meta: 'false',
-      'viewport.width': width,
-      'viewport.height': height,
-      'viewport.deviceScaleFactor': '3',
-      'waitFor': '2000',
-      ...(usePrerender && { prerender: 'true', waitFor: '6000' }),
+      width: width.toString(),
+      height: height.toString(),
+      deviceScaleFactor: '3', // High res
+      ...(isFullPage && { fullPage: 'true' }),
       ...(isMobile && {
-        'viewport.isMobile': 'true',
-        'viewport.hasTouch': 'true',
-        'userAgent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
-      }),
+        isMobile: 'true',
+        hasTouch: 'true',
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+      })
     });
-    const finalUrl = `https://api.microlink.io/?${params.toString()}&embed=screenshot.url`;
-    console.log('Generated Screenshot URL:', finalUrl);
-    return finalUrl;
+
+    // Add a unique timestamp to bust React/Browser caching when re-generating
+    params.set('t', Date.now().toString());
+
+    return `${baseUrl}?${params.toString()}`;
   };
 
   const handleUrlSubmit = async (e) => {
@@ -138,7 +141,8 @@ function App() {
           ...page,
           url: targetUrl, // Update the state with the constructed URL so the user sees it
           // switch to standard capture (false) to match device mockups reliability
-          image: getScreenshotUrl(targetUrl, width, height, useMobileViewport, false)
+          // Set fullPage to true for Pages mode
+          image: getScreenshotUrl(targetUrl, width, height, useMobileViewport, false, true)
         };
       });
       setPages(newPages);
@@ -224,7 +228,7 @@ function App() {
         {/* Header */}
         <header className="fixed top-0 inset-x-0 z-50 transition-all duration-300">
           <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm supports-[backdrop-filter]:bg-white/60"></div>
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="relative w-full px-4 sm:px-6 lg:px-12 h-16 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/25">M</div>
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">MockupGen</span>
@@ -254,10 +258,10 @@ function App() {
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+        <main className="w-full px-4 sm:px-6 lg:px-12 py-12 space-y-12">
           <div className="space-y-12">
             {/* Hero */}
-            <div className="text-center space-y-6 max-w-4xl mx-auto pt-20 pb-12">
+            <div className="text-center space-y-6 w-full pt-20 pb-12">
               <div className="inline-flex items-center rounded-full border border-blue-100 bg-blue-50/50 backdrop-blur-sm px-3 py-1 text-sm font-medium text-blue-800 shadow-sm mb-4">
                 <span className="flex h-2 w-2 rounded-full bg-blue-600 mr-2 animate-pulse"></span>
                 New: Page Stacks are here
@@ -268,7 +272,7 @@ function App() {
                   {mode === 'device' ? 'Device Mockups' : '3D Page Stacks'}
                 </span>
               </h2>
-              <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xl text-gray-500 leading-relaxed">
                 {mode === 'device'
                   ? 'Turn your website into professional visuals instantly. Paste a URL, get stunning device shots.'
                   : 'Visualize your user journey with cinematic 3D stacks. Perfect for pitch decks and portfolios.'}
@@ -288,7 +292,7 @@ function App() {
                     </h3>
                   </div>
                   <p className="text-sm text-gray-500">
-                    Website mockups are available now. App & logo mockups are in progress.
+                    Website and App mockups are available.
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

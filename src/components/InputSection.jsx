@@ -24,6 +24,11 @@ export function InputSection({
 }) {
     const isAppProject = projectType === 'app';
 
+    const handleHardRefresh = () => {
+        if (typeof window !== 'undefined') {
+            window.location.reload();
+        }
+    };
 
     const handleAppScreenFileChange = (id, file) => {
         if (!file || !onAppScreenUpload) return;
@@ -54,7 +59,16 @@ export function InputSection({
             <div className="absolute inset-0 bg-gradient-to-b from-white/40 to-white/0 rounded-[2.5rem] -z-10 pointer-events-none"></div>
             <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 p-8 md:p-10 space-y-10 ring-1 ring-black/5">
                 {/* Form wrapping inputs */}
-                <form onSubmit={onSubmit} className="relative max-w-2xl mx-auto space-y-4">
+                <form onSubmit={onSubmit} className="relative w-full space-y-4">
+                    <div className="flex justify-end">
+                        <button
+                            type="button"
+                            onClick={handleHardRefresh}
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            New Session
+                        </button>
+                    </div>
                     {mode === 'device' ? (
                         <div className="relative flex items-center">
                             <Globe className="absolute left-4 w-5 h-5 text-gray-400" />
@@ -235,21 +249,67 @@ export function InputSection({
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {devices.map(({ id, icon: DeviceIcon, label }) => (
-                                    <div key={id} className="relative group">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => onUpload(id, e.target.files[0])}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                        />
-                                        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-200/60 rounded-2xl group-hover:border-blue-400 group-hover:bg-blue-50/30 transition-all h-36 bg-gray-50/30">
-                                            <DeviceIcon className="w-8 h-8 text-gray-400 group-hover:text-blue-500 mb-2 transition-colors duration-300" />
-                                            <span className="text-sm font-semibold text-gray-600 group-hover:text-blue-600 transition-colors">{label}</span>
-                                            <span className="text-xs text-gray-400 mt-1 font-medium">Click to upload</span>
+                                {devices.map(({ id, icon: DeviceIcon, label }, index) => {
+                                    // 3D Gradients per device
+                                    const gradients = [
+                                        'from-pink-500 to-rose-500',    // Mobile
+                                        'from-purple-500 to-indigo-500', // Tablet
+                                        'from-blue-500 to-cyan-500',     // Laptop
+                                        'from-emerald-500 to-teal-500'   // Desktop
+                                    ];
+                                    const gradient = gradients[index % gradients.length];
+                                    const shadowColor = [
+                                        'shadow-pink-500/20',
+                                        'shadow-purple-500/20',
+                                        'shadow-blue-500/20',
+                                        'shadow-emerald-500/20'
+                                    ][index % 4];
+
+                                    return (
+                                        <div key={id} className="relative group cursor-pointer perspective-1000">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => onUpload(id, e.target.files[0])}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                                title=""
+                                            />
+                                            <div className={`
+                                                relative overflow-hidden rounded-2xl bg-white border border-gray-100 
+                                                transition-all duration-300 ease-out
+                                                group-hover:-translate-y-2 group-hover:shadow-2xl ${shadowColor}
+                                                h-40 flex flex-col items-center justify-center gap-3
+                                            `}>
+                                                {/* Animated Gradient Background Blob */}
+                                                <div className={`
+                                                    absolute top-0 inset-x-0 h-32 bg-gradient-to-b ${gradient} opacity-[0.03] 
+                                                    group-hover:opacity-[0.08] transition-opacity duration-500
+                                                `}></div>
+
+                                                {/* 3D Icon Container */}
+                                                <div className={`
+                                                    relative w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} 
+                                                    shadow-lg transform transition-transform duration-500 
+                                                    group-hover:scale-110 group-hover:rotate-3 flex items-center justify-center
+                                                    text-white
+                                                `}>
+                                                    <DeviceIcon className="w-7 h-7 drop-shadow-md" />
+                                                    {/* Gloss effect */}
+                                                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/20 to-transparent pointer-events-none"></div>
+                                                </div>
+
+                                                <div className="text-center z-10">
+                                                    <span className="block text-sm font-bold text-gray-700 group-hover:text-gray-900 transition-colors">
+                                                        {label}
+                                                    </span>
+                                                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider group-hover:text-blue-500 transition-colors">
+                                                        Upload
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </>
@@ -258,4 +318,3 @@ export function InputSection({
         </div>
     );
 }
-

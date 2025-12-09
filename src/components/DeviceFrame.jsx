@@ -23,6 +23,7 @@ export const DeviceFrame = React.forwardRef(function DeviceFrame(
                     </div>
                 ) : image && !imageFailed ? (
                     <img
+                        key={image} // Force re-render when URL changes to prevent stale image capture
                         src={image}
                         alt="Preview"
                         className={`w-full h-full ${contentFit === 'contain'
