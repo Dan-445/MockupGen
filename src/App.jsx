@@ -229,10 +229,7 @@ function App() {
         <header className="fixed top-0 inset-x-0 z-50 transition-all duration-300">
           <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm supports-[backdrop-filter]:bg-white/60"></div>
           <div className="relative w-full px-4 sm:px-6 lg:px-12 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/25">M</div>
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">MockupGen</span>
-            </div>
+            <img src="/full-logo.png" alt="MockupGen Logo" className="h-10 w-auto object-contain" />
 
 
             <div className="flex items-center gap-4">
