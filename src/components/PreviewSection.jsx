@@ -178,10 +178,9 @@ export function PreviewSection({
         // Use the larger ratio to ensure at least one dimension hits 4K
         const desiredRatio = Math.max(widthRatio, heightRatio);
 
-        // Cap at reasonable limits to prevent crashes (max 5x or native pixel ratio * 3)
-        // detailed displays like retina need less multiplier to look good, but to get raw 4K pixels we need math.
-        // We floor the device pixel ratio to 1 for calculation to ensure we drive the resolution by content size, not screen density alone.
-        return Math.min(6, Math.max(desiredRatio, 2));
+        // Cap at reasonable limits to prevent crashes (max 3x is usually sufficient for 4K quality without glitches)
+        // High pixel ratios (>3) often cause white lines, clipping, or z-fighting glitches on complex CSS layouts
+        return Math.min(3, Math.max(desiredRatio, 2));
     };
 
     const waitForFonts = async () => {
@@ -322,19 +321,23 @@ export function PreviewSection({
         if (!element) return null;
         await waitForFonts();
         await waitForImages(element);
-        const rect = element.getBoundingClientRect();
+
+        // Let html-to-image handle dimensions naturally.
+        // Explicitly setting width/height can cause clipping if sub-pixels or transforms are involved.
         const pixelRatio = getPixelRatio(element, options);
-        const canvasWidth = rect?.width ? rect.width * pixelRatio : undefined;
-        const canvasHeight = rect?.height ? rect.height * pixelRatio : undefined;
 
         const hiddenNodes = hideElementsForExport(element);
         try {
             return await toPng(element, {
                 cacheBust: true,
                 pixelRatio,
-                canvasWidth,
-                canvasHeight,
                 backgroundColor: '#00000000',
+                skipAutoScale: true, // Prevent library from trying to fit weirdly
+                style: {
+                    // Ensure no transforms on the root interact with capture
+                    transform: 'none',
+                    margin: 0
+                },
                 ...options
             });
         } finally {

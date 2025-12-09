@@ -6,6 +6,10 @@ import chromium from '@sparticuz/chromium';
 chromium.setHeadlessMode = true;
 chromium.setGraphicsMode = false;
 
+export const config = {
+    maxDuration: 60, // Attempt to set longer timeout (only works on Pro, but good to have)
+};
+
 export default async function handler(req, res) {
     const { url, width, height, isMobile, deviceScaleFactor, hasTouch, userAgent } = req.query;
 
@@ -17,18 +21,12 @@ export default async function handler(req, res) {
 
     let browser = null;
     try {
-        // Determine if we are running locally or on Vercel
-        const isLocal = process.env.VERCEL_ENV === undefined;
-
-        // Launch options for Vercel vs Local
-        // Note: locally this file might fail if you don't have the executables linked, 
-        // but the intention is to use server.js locally, and this file on Vercel.
         const executablePath = await chromium.executablePath();
 
         browser = await puppeteer.launch({
-            args: chromium.args,
+            args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
             defaultViewport: chromium.defaultViewport,
-            executablePath: executablePath || '/usr/bin/google-chrome', // Fallback for some envs
+            executablePath: executablePath || '/usr/bin/google-chrome',
             headless: chromium.headless,
         });
 
@@ -46,12 +44,15 @@ export default async function handler(req, res) {
             await page.setUserAgent(userAgent);
         }
 
+        // Optimize for speed: block fonts/images if not needed? No we need them.
+        // But we can switch to networkidle2 which allows 2 active connections (e.g. tracking scripts)
+        // This is much faster than networkidle0
         await page.goto(targetUrl, {
-            waitUntil: 'networkidle0',
-            timeout: 10000 // Vercel free tier limit is tight, keep it 10s or less safe
+            waitUntil: 'networkidle2',
+            timeout: 9000 // Set to 9s to fail gracefully before Vercel 10s hard timeout
         });
 
-        // Hide scrollbars
+        // Hide scrollbars via CSS
         await page.addStyleTag({ content: 'body { overflow: hidden !important; }' });
 
         const file = await page.screenshot({
@@ -60,14 +61,18 @@ export default async function handler(req, res) {
         });
 
         res.setHeader('Content-Type', 'image/jpeg');
-        res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate');
+        // Cache for 1 day, stale for 1 day
+        res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=86400');
         res.status(200).send(file);
 
     } catch (error) {
         console.error('Vercel Screenshot Error:', error);
+
+        // Return a JSON error that the frontend can handle nicely
         res.status(500).json({
             error: 'Failed to generate screenshot',
-            details: error.message
+            details: error.message,
+            hint: 'The page might be too slow for Vercel Serverless (10s limit).'
         });
     } finally {
         if (browser) await browser.close();
