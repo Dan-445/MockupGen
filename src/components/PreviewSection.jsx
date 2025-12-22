@@ -242,6 +242,25 @@ export function PreviewSection({
         return response.blob();
     };
 
+    const downloadBlob = (filename, blob) => {
+        if (!blob) return;
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        // Give the browser time to start the download before revoking.
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+    };
+
+    const downloadDataUrlAsFile = async (filename, dataUrl) => {
+        if (!dataUrl) return;
+        const blob = await dataUrlToBlob(dataUrl);
+        downloadBlob(filename, blob);
+    };
+
     const blobToDataUrl = (blob) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -365,10 +384,7 @@ export function PreviewSection({
             const dataUrl = await exportElement(ref.current, exportBackgroundOptions);
             if (!dataUrl) return;
             const finalUrl = await ensureMaxSize(dataUrl);
-            const link = document.createElement('a');
-            link.download = `mockup-${device}-${getTimestamp()}.jpg`;
-            link.href = finalUrl;
-            link.click();
+            await downloadDataUrlAsFile(`mockup-${device}-${getTimestamp()}.jpg`, finalUrl);
         } catch (err) {
             console.error('Failed to download image', err);
         } finally {
@@ -382,10 +398,7 @@ export function PreviewSection({
             setDownloading(true);
             const dataUrl = await exportElement(containerRef.current, exportBackgroundOptions);
             const finalUrl = await ensureMaxSize(dataUrl);
-            const link = document.createElement('a');
-            link.download = `mockup-composition-${getTimestamp()}.jpg`;
-            link.href = finalUrl;
-            link.click();
+            await downloadDataUrlAsFile(`mockup-composition-${getTimestamp()}.jpg`, finalUrl);
             return finalUrl; // Return for zip
         } catch (err) {
             console.error('Failed to download composition', err);
@@ -415,11 +428,9 @@ export function PreviewSection({
                     if (ref.current && images[name]) {
                         const dataUrl = await exportElement(ref.current, exportBackgroundOptions);
                         const finalUrl = await ensureMaxSize(dataUrl);
-                        const [meta = '', base64Data = ''] = finalUrl.split(',');
-                        const extension = meta.includes('jpeg') ? 'jpg' : 'png';
-                        if (base64Data) {
-                            zip.file(`mockup-${name}-${timestamp}.${extension}`, base64Data, { base64: true });
-                        }
+                        const blob = await dataUrlToBlob(finalUrl);
+                        const extension = blob.type.includes('jpeg') ? 'jpg' : 'png';
+                        zip.file(`mockup-${name}-${timestamp}.${extension}`, blob);
                     }
                 });
                 await Promise.all(promises);
@@ -430,19 +441,14 @@ export function PreviewSection({
                 const compositionDataUrl = await exportElement(containerRef.current, exportBackgroundOptions);
                 if (compositionDataUrl) {
                     const finalUrl = await ensureMaxSize(compositionDataUrl);
-                    const [meta = '', compositionBase64 = ''] = finalUrl.split(',');
-                    const extension = meta.includes('jpeg') ? 'jpg' : 'png';
-                    if (compositionBase64) {
-                        zip.file(`mockup-composition-${timestamp}.${extension}`, compositionBase64, { base64: true });
-                    }
+                    const blob = await dataUrlToBlob(finalUrl);
+                    const extension = blob.type.includes('jpeg') ? 'jpg' : 'png';
+                    zip.file(`mockup-composition-${timestamp}.${extension}`, blob);
                 }
             }
 
             const content = await zip.generateAsync({ type: "blob" });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(content);
-            link.download = `mockups-${timestamp}.zip`;
-            link.click();
+            downloadBlob(`mockups-${timestamp}.zip`, content);
         } catch (err) {
             console.error('Failed to generate zip', err);
         } finally {
