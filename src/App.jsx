@@ -397,7 +397,7 @@ function App() {
               rel="noreferrer"
               className="text-gray-700 hover:text-gray-900 underline underline-offset-4"
             >
-              ByteTech Sol
+              Bytechsol
             </a>
           </div>
         </footer>
