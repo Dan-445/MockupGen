@@ -381,7 +381,24 @@ function App() {
 
         <footer className="w-full px-4 sm:px-6 lg:px-12 pb-10">
           <div className="mx-auto max-w-7xl border-t border-gray-200 pt-6 text-center text-sm text-gray-500">
-            Brought to life by Aveix Solution and ByteTech Sol
+            Brought to life by{' '}
+            <a
+              href="https://aevixsolutions.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-gray-700 hover:text-gray-900 underline underline-offset-4"
+            >
+              Aveix Solutions
+            </a>{' '}
+            and{' '}
+            <a
+              href="https://bytechsol.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-gray-700 hover:text-gray-900 underline underline-offset-4"
+            >
+              ByteTech Sol
+            </a>
           </div>
         </footer>
 
