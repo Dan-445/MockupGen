@@ -11,20 +11,95 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-    const { url, width, height, isMobile, deviceScaleFactor, hasTouch, userAgent } = req.query;
+    const { url, isMobile, hasTouch, userAgent } = req.query;
 
     if (!url) {
         return res.status(400).json({ error: 'URL is required' });
     }
 
-    const targetUrl = url.startsWith('http') ? url : `https://${url}`;
+    const MAX_URL_LENGTH = Number(process.env.MAX_URL_LENGTH || 2048);
+    const ALLOW_PRIVATE_URLS = process.env.ALLOW_PRIVATE_URLS === 'true';
+
+    const isPrivateIp = (ip) => {
+        if (typeof ip !== 'string') return false;
+        if (ip === '127.0.0.1' || ip === '0.0.0.0') return true;
+        if (ip.startsWith('10.')) return true;
+        if (ip.startsWith('192.168.')) return true;
+        if (ip.startsWith('169.254.')) return true;
+        const match172 = ip.match(/^172\.(\d+)\./);
+        if (match172) {
+            const second = Number(match172[1]);
+            if (second >= 16 && second <= 31) return true;
+        }
+        return false;
+    };
+
+    const normalizeAndValidateTargetUrl = (rawUrl) => {
+        if (typeof rawUrl !== 'string' || !rawUrl.trim()) {
+            return { ok: false, error: 'URL is required' };
+        }
+        if (rawUrl.length > MAX_URL_LENGTH) {
+            return { ok: false, error: 'URL is too long' };
+        }
+
+        const candidate = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
+        let parsed;
+        try {
+            parsed = new URL(candidate);
+        } catch {
+            return { ok: false, error: 'Invalid URL' };
+        }
+
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+            return { ok: false, error: 'Only http/https URLs are allowed' };
+        }
+
+        const hostname = (parsed.hostname || '').toLowerCase();
+        if (!hostname) return { ok: false, error: 'Invalid URL host' };
+
+        if (!ALLOW_PRIVATE_URLS) {
+            if (
+                hostname === 'localhost' ||
+                hostname.endsWith('.localhost') ||
+                hostname.endsWith('.local') ||
+                hostname === '0.0.0.0' ||
+                hostname === '127.0.0.1' ||
+                hostname === '::1'
+            ) {
+                return { ok: false, error: 'Local URLs are not allowed' };
+            }
+            const isIpv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
+            if (isIpv4 && isPrivateIp(hostname)) {
+                return { ok: false, error: 'Private network URLs are not allowed' };
+            }
+        }
+
+        return { ok: true, url: parsed.toString() };
+    };
+
+    const clampInt = (value, fallback, min, max) => {
+        const n = Number.parseInt(value, 10);
+        if (!Number.isFinite(n)) return fallback;
+        return Math.min(max, Math.max(min, n));
+    };
+
+    const normalized = normalizeAndValidateTargetUrl(url);
+    if (!normalized.ok) {
+        return res.status(400).json({ error: normalized.error });
+    }
+
+    const viewportWidth = clampInt(req.query.width, 1280, 240, 2400);
+    const viewportHeight = clampInt(req.query.height, 800, 240, 2400);
+    const scaleFactor = clampInt(req.query.deviceScaleFactor, 1, 1, 3);
+
+    const targetUrl = normalized.url;
 
     let browser = null;
     try {
         const executablePath = await chromium.executablePath();
 
         browser = await puppeteer.launch({
-            args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
+            args: [...chromium.args, '--hide-scrollbars'],
             defaultViewport: chromium.defaultViewport,
             executablePath: executablePath || '/usr/bin/google-chrome',
             headless: chromium.headless,
@@ -33,9 +108,9 @@ export default async function handler(req, res) {
         const page = await browser.newPage();
 
         await page.setViewport({
-            width: parseInt(width) || 1280,
-            height: parseInt(height) || 800,
-            deviceScaleFactor: parseInt(deviceScaleFactor) || 1,
+            width: viewportWidth,
+            height: viewportHeight,
+            deviceScaleFactor: scaleFactor,
             isMobile: isMobile === 'true',
             hasTouch: hasTouch === 'true'
         });
@@ -43,6 +118,37 @@ export default async function handler(req, res) {
         if (userAgent) {
             await page.setUserAgent(userAgent);
         }
+
+        await page.setRequestInterception(true);
+        page.on('request', (request) => {
+            const requestUrl = request.url();
+            try {
+                const parsed = new URL(requestUrl);
+                if (!['http:', 'https:'].includes(parsed.protocol)) {
+                    return request.abort();
+                }
+                if (!ALLOW_PRIVATE_URLS) {
+                    const hostname = (parsed.hostname || '').toLowerCase();
+                    if (
+                        hostname === 'localhost' ||
+                        hostname.endsWith('.localhost') ||
+                        hostname.endsWith('.local') ||
+                        hostname === '0.0.0.0' ||
+                        hostname === '127.0.0.1' ||
+                        hostname === '::1'
+                    ) {
+                        return request.abort();
+                    }
+                    const isIpv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
+                    if (isIpv4 && isPrivateIp(hostname)) {
+                        return request.abort();
+                    }
+                }
+            } catch {
+                return request.abort();
+            }
+            return request.continue();
+        });
 
         // Optimize for speed: block fonts/images if not needed? No we need them.
         // But we can switch to networkidle2 which allows 2 active connections (e.g. tracking scripts)

@@ -330,6 +330,7 @@ export function PreviewSection({
         try {
             return await toPng(element, {
                 cacheBust: true,
+                useCors: true,
                 pixelRatio,
                 backgroundColor: '#00000000',
                 skipAutoScale: true, // Prevent library from trying to fit weirdly
@@ -548,19 +549,19 @@ export function PreviewSection({
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-[0.3em]">Palette</p>
                         {backgroundType === 'solid' ? (
                             <>
-                                <div className="mt-3 grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                                <div className="mt-3 flex flex-wrap gap-1.5">
                                     {SOLID_COLOR_GRID.map(color => (
                                         <button
                                             key={color}
                                             onClick={() => setSelectedSolid(color)}
-                                            className={`aspect-square rounded-xl border transition-all relative shadow-[0_8px_18px_rgba(15,23,42,0.15)] ${selectedSolid === color
+                                            className={`h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 rounded-full border transition-all relative shadow-none ${selectedSolid === color
                                                 ? 'border-gray-900 ring-2 ring-gray-900/30 scale-105'
-                                                : 'border-gray-200 hover:border-gray-400 hover:-translate-y-0.5'}`}
+                                                : 'border-gray-200 hover:border-gray-400'}`}
                                             style={{ backgroundColor: color }}
                                             aria-label={`Select ${color}`}
                                         >
                                             {selectedSolid === color && (
-                                                <Check className="w-3 h-3 text-white mix-blend-difference absolute inset-0 m-auto" />
+                                                <Check className="w-2 h-2 text-white mix-blend-difference absolute inset-0 m-auto" />
                                             )}
                                         </button>
                                     ))}
@@ -597,14 +598,14 @@ export function PreviewSection({
                             </>
                         ) : (
                             <div className="mt-3 space-y-3">
-                                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                                <div className="flex flex-wrap gap-1.5">
                                     {GRADIENT_BACKGROUNDS.map(gradient => (
                                         <button
                                             key={gradient.id}
                                             onClick={() => setSelectedGradientId(gradient.id)}
-                                            className={`aspect-square rounded-xl border transition-all relative overflow-hidden shadow-[0_8px_18px_rgba(15,23,42,0.15)] ${selectedGradientId === gradient.id
+                                            className={`h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 rounded-full border transition-all relative overflow-hidden shadow-none ${selectedGradientId === gradient.id
                                                 ? 'border-gray-900 ring-2 ring-gray-900/30 scale-105'
-                                                : 'border-gray-200 hover:border-gray-400 hover:-translate-y-0.5'}`}
+                                                : 'border-gray-200 hover:border-gray-400'}`}
                                             style={{
                                                 backgroundImage: gradientOrientation.id === 'radial'
                                                     ? `radial-gradient(circle, ${isGradientInverted ? gradient.to : gradient.from}, ${isGradientInverted ? gradient.from : gradient.to})`
@@ -613,7 +614,7 @@ export function PreviewSection({
                                             aria-label={`Select ${gradient.label}`}
                                         >
                                             {selectedGradientId === gradient.id && (
-                                                <Check className="w-3 h-3 text-white mix-blend-difference absolute inset-0 m-auto" />
+                                                <Check className="w-2 h-2 text-white mix-blend-difference absolute inset-0 m-auto" />
                                             )}
                                         </button>
                                     ))}
@@ -650,7 +651,7 @@ export function PreviewSection({
                     <div className="flex items-center justify-between flex-wrap gap-4">
                         <h3 className="text-2xl font-bold text-gray-900">Preview</h3>
 
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center flex-wrap gap-3">
                             {/* Layout Toggles */}
                             {!isAppProject && (
                                 <div className="bg-white/60 backdrop-blur-md border border-white/50 p-1.5 rounded-xl flex shadow-sm ring-1 ring-black/5">
@@ -774,19 +775,31 @@ export function PreviewSection({
                         <div className="w-full flex justify-center pb-12 px-4">
                             <div
                                 ref={containerRef}
-                                className="relative w-full max-w-[1200px] flex items-end justify-center gap-0 p-8 md:p-16 rounded-[40px] border border-white/60 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)]"
+                                className="relative w-full max-w-[1200px] flex flex-col md:flex-row md:flex-wrap xl:flex-nowrap items-center md:items-end justify-center gap-8 md:gap-6 xl:gap-0 p-8 md:p-16 rounded-[40px] border border-white/60 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)]"
                                 style={backgroundStyle}
                             >
-                                <div ref={mobileRef} className="relative z-30 w-[15%] md:w-[180px] -translate-y-2 md:-translate-y-3 mr-[-8%] md:mr-[-90px] shrink-0">
+                                <div
+                                    ref={mobileRef}
+                                    className="relative z-30 w-full max-w-[220px] md:w-[140px] lg:w-[180px] md:-translate-y-3 md:mr-0 xl:mr-[-90px] md:shrink-0"
+                                >
                                     <DeviceFrame type="mobile" image={getDeviceImage('mobile')} loading={loading} />
                                 </div>
-                                <div ref={tabletRef} className="relative z-20 w-[22%] md:w-[260px] -translate-y-2 md:-translate-y-3 mr-[-7%] md:mr-[-80px] shrink-0">
+                                <div
+                                    ref={tabletRef}
+                                    className="relative z-20 w-full max-w-[360px] md:w-[200px] lg:w-[260px] md:-translate-y-3 md:mr-0 xl:mr-[-80px] md:shrink-0"
+                                >
                                     <DeviceFrame type="tablet" image={getDeviceImage('tablet')} loading={loading} />
                                 </div>
-                                <div ref={desktopRef} className="relative z-10 w-[54%] md:w-[650px] translate-y-1 md:translate-y-2 mx-[-4%] md:mx-[-45px] shrink-0">
+                                <div
+                                    ref={desktopRef}
+                                    className="relative z-10 w-full max-w-[900px] md:w-[520px] lg:w-[650px] md:translate-y-2 md:mx-0 xl:mx-[-45px] md:shrink-0"
+                                >
                                     <DeviceFrame type="desktop" image={getDeviceImage('desktop')} loading={loading} />
                                 </div>
-                                <div ref={laptopRef} className="relative z-20 w-[35%] md:w-[420px] -translate-y-0.5 md:-translate-y-1 ml-[-5%] md:ml-[-50px] shrink-0">
+                                <div
+                                    ref={laptopRef}
+                                    className="relative z-20 w-full max-w-[720px] md:w-[320px] lg:w-[420px] md:-translate-y-1 md:ml-0 xl:ml-[-50px] md:shrink-0"
+                                >
                                     <DeviceFrame type="laptop" image={getDeviceImage('laptop')} loading={loading} />
                                 </div>
                             </div>
@@ -951,6 +964,7 @@ export function PreviewSection({
                                         <img
                                             src={screen.image}
                                             alt={screen.label || `Screen ${index + 1}`}
+                                            crossOrigin="anonymous"
                                             className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-[1.03]"
                                         />
                                         <div className="absolute inset-0 rounded-[32px] border border-white/40 pointer-events-none" />
@@ -1009,7 +1023,7 @@ export function PreviewSection({
                                                             top: '100px'
                                                         }}
                                                     >
-                                                        <img src={page.image || `https://placehold.co/400x600/eee/999?text=${page.label}`} alt={page.label} className="w-[400px] h-[600px] object-cover object-top" />
+                                                        <img src={page.image || `https://placehold.co/400x600/eee/999?text=${page.label}`} alt={page.label} crossOrigin="anonymous" className="w-[400px] h-[600px] object-cover object-top" />
                                                         <div className="absolute bottom-0 left-0 right-0 text-center font-bold text-gray-500 text-xs uppercase tracking-[0.2em] bg-white/95 backdrop-blur py-3 border-t border-gray-100">{page.label}</div>
                                                     </div>
                                                 );
@@ -1054,6 +1068,7 @@ export function PreviewSection({
                                                         <img
                                                             src={leftPage.image || `https://placehold.co/430x1200/eee/999?text=${leftPage.label}`}
                                                             alt={leftPage.label}
+                                                            crossOrigin="anonymous"
                                                             className="w-full h-full object-cover object-top hover:object-contain transition-all duration-700 bg-gray-50"
                                                         />
                                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none" />
@@ -1078,6 +1093,7 @@ export function PreviewSection({
                                                         <img
                                                             src={rightPage.image || `https://placehold.co/430x1200/eee/999?text=${rightPage.label}`}
                                                             alt={rightPage.label}
+                                                            crossOrigin="anonymous"
                                                             className="w-full h-full object-cover object-top hover:object-contain transition-all duration-700 bg-gray-50"
                                                         />
                                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none" />
@@ -1119,6 +1135,7 @@ export function PreviewSection({
                                             <img
                                                 src={page.image || `https://placehold.co/430x880/eeeeee/888888?text=${page.label}`}
                                                 alt={page.label}
+                                                crossOrigin="anonymous"
                                                 className="w-full h-full object-cover object-top"
                                             />
                                             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur px-4 py-1 rounded-full text-xs font-semibold tracking-[0.3em] text-gray-600 uppercase">
@@ -1148,6 +1165,7 @@ export function PreviewSection({
                                         <img
                                             src={page.image || `https://placehold.co/430x880/eeeeee/888888?text=${page.label}`}
                                             alt={page.label}
+                                            crossOrigin="anonymous"
                                             className="w-full h-full object-cover object-top"
                                         />
                                         <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-white/90 px-5 py-2 rounded-full text-sm font-semibold text-gray-700 tracking-[0.2em] uppercase">

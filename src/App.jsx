@@ -379,6 +379,12 @@ function App() {
           </div>
         </main>
 
+        <footer className="w-full px-4 sm:px-6 lg:px-12 pb-10">
+          <div className="mx-auto max-w-7xl border-t border-gray-200 pt-6 text-center text-sm text-gray-500">
+            Brought to life by Aveix Solution and ByteTech Sol
+          </div>
+        </footer>
+
         {/* Debug Logs Overlay */}
         {/* Debug Logs Overlay */}
       </div>

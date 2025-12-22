@@ -26,6 +26,7 @@ export const DeviceFrame = React.forwardRef(function DeviceFrame(
                         key={image} // Force re-render when URL changes to prevent stale image capture
                         src={image}
                         alt="Preview"
+                        crossOrigin="anonymous"
                         className={`w-full h-full ${contentFit === 'contain'
                             ? 'object-contain bg-black'
                             : 'object-cover object-top brightness-110 contrast-105'
