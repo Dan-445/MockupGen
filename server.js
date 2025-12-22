@@ -426,7 +426,8 @@ if (process.env.NODE_ENV === 'production') {
     const distPath = path.join(__dirname, 'dist');
 
     app.use(express.static(distPath, { maxAge: '1h', index: false }));
-    app.get('*', (req, res) => {
+    // Express v5 + path-to-regexp v6 doesn't allow `'*'` as a route pattern.
+    app.get('/*', (req, res) => {
         res.sendFile(path.join(distPath, 'index.html'));
     });
 }
