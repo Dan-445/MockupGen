@@ -773,36 +773,36 @@ export function PreviewSection({
                     {/* Collection Layout (Device Mode) */}
                     {mode === 'device' && layout === 'collection' && !isAppProject && (
                         <div className="w-full flex justify-center pb-12 px-4">
-                            <div
-                                ref={containerRef}
-                                className="relative w-full max-w-[1200px] flex flex-col md:flex-row md:flex-wrap xl:flex-nowrap items-center md:items-end justify-center gap-8 md:gap-6 xl:gap-0 p-8 md:p-16 rounded-[40px] border border-white/60 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)]"
-                                style={backgroundStyle}
-                            >
-                                <div
-                                    ref={mobileRef}
-                                    className="relative z-30 w-full max-w-[220px] md:w-[140px] lg:w-[180px] md:-translate-y-3 md:mr-0 xl:mr-[-90px] md:shrink-0"
-                                >
-                                    <DeviceFrame type="mobile" image={getDeviceImage('mobile')} loading={loading} />
-                                </div>
-                                <div
-                                    ref={tabletRef}
-                                    className="relative z-20 w-full max-w-[360px] md:w-[200px] lg:w-[260px] md:-translate-y-3 md:mr-0 xl:mr-[-80px] md:shrink-0"
-                                >
-                                    <DeviceFrame type="tablet" image={getDeviceImage('tablet')} loading={loading} />
-                                </div>
-                                <div
-                                    ref={desktopRef}
-                                    className="relative z-10 w-full max-w-[900px] md:w-[520px] lg:w-[650px] md:translate-y-2 md:mx-0 xl:mx-[-45px] md:shrink-0"
-                                >
-                                    <DeviceFrame type="desktop" image={getDeviceImage('desktop')} loading={loading} />
-                                </div>
-                                <div
-                                    ref={laptopRef}
-                                    className="relative z-20 w-full max-w-[720px] md:w-[320px] lg:w-[420px] md:-translate-y-1 md:ml-0 xl:ml-[-50px] md:shrink-0"
-                                >
-                                    <DeviceFrame type="laptop" image={getDeviceImage('laptop')} loading={loading} />
-                                </div>
-                            </div>
+	                            <div
+	                                ref={containerRef}
+	                                className="relative w-full max-w-[1200px] flex flex-col md:flex-row md:flex-wrap 2xl:flex-nowrap items-center md:items-end justify-center gap-8 md:gap-6 2xl:gap-0 p-8 md:p-16 rounded-[40px] border border-white/60 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)]"
+	                                style={backgroundStyle}
+	                            >
+	                                <div
+	                                    ref={mobileRef}
+	                                    className="relative z-30 w-full max-w-[220px] md:w-[140px] lg:w-[180px] md:-translate-y-3 md:mr-0 2xl:mr-[-90px] md:shrink-0"
+	                                >
+	                                    <DeviceFrame type="mobile" image={getDeviceImage('mobile')} loading={loading} />
+	                                </div>
+	                                <div
+	                                    ref={tabletRef}
+	                                    className="relative z-20 w-full max-w-[360px] md:w-[200px] lg:w-[260px] md:-translate-y-3 md:mr-0 2xl:mr-[-80px] md:shrink-0"
+	                                >
+	                                    <DeviceFrame type="tablet" image={getDeviceImage('tablet')} loading={loading} />
+	                                </div>
+	                                <div
+	                                    ref={desktopRef}
+	                                    className="relative z-10 w-full max-w-[900px] md:w-[520px] lg:w-[650px] md:translate-y-2 md:mx-0 2xl:mx-[-45px] md:shrink-0"
+	                                >
+	                                    <DeviceFrame type="desktop" image={getDeviceImage('desktop')} loading={loading} />
+	                                </div>
+	                                <div
+	                                    ref={laptopRef}
+	                                    className="relative z-20 w-full max-w-[720px] md:w-[320px] lg:w-[420px] md:-translate-y-1 md:ml-0 2xl:ml-[-50px] md:shrink-0"
+	                                >
+	                                    <DeviceFrame type="laptop" image={getDeviceImage('laptop')} loading={loading} />
+	                                </div>
+	                            </div>
                         </div>
                     )}
 
