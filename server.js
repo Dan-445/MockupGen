@@ -18,7 +18,7 @@ const MAX_CACHE_ENTRIES = Number(process.env.SCREENSHOT_CACHE_SIZE || 30);
 app.set('trust proxy', Number(process.env.TRUST_PROXY || 1));
 app.disable('x-powered-by');
 
-app.use((req, res, next) => {
+app.use('/api', (req, res, next) => {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
     next();
 });
