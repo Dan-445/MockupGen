@@ -38,11 +38,15 @@ const corsOrigins = (process.env.CORS_ORIGIN || '')
 
 app.use(cors(corsOrigins.length ? { origin: corsOrigins } : { origin: false }));
 
+const isCrawlerMetadataRoute = (req) =>
+    req.path === '/robots.txt' || req.path === '/sitemap.xml';
+
 app.use(rateLimit({
     windowMs: 60_000,
     limit: Number(process.env.RATE_LIMIT_PER_MIN || 300),
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: isCrawlerMetadataRoute
 }));
 
 const CAPTURE_CONCURRENCY = Math.max(
@@ -424,6 +428,23 @@ if (process.env.NODE_ENV === 'production') {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const distPath = path.join(__dirname, 'dist');
+
+    const sendCrawlerFile = (res, filename, contentType) => {
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        if (contentType) {
+            res.set('Content-Type', contentType);
+        }
+        res.sendFile(path.join(distPath, filename));
+    };
+
+    app.get('/robots.txt', (req, res) =>
+        sendCrawlerFile(res, 'robots.txt', 'text/plain; charset=utf-8')
+    );
+    app.get('/sitemap.xml', (req, res) =>
+        sendCrawlerFile(res, 'sitemap.xml', 'application/xml; charset=utf-8')
+    );
 
     app.use(express.static(distPath, { maxAge: '1h', index: false }));
     // Express v5 + path-to-regexp v6: use a RegExp for SPA fallback routes.
